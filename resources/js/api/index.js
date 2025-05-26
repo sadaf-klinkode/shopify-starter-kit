@@ -33,12 +33,14 @@ export const postRequest = async (url, data) => {
 
 export const getRules = async () => {
     const headers = await getAuthHeaders();
-    const response = await fetch("/api/rules/get-rules", { headers }).then((res) => {
-        if (!res.ok) {
-            throw new Error("Failed to fetch rules");
+    const response = await fetch("/api/rules/get-rules", { headers }).then(
+        (res) => {
+            if (!res.ok) {
+                throw new Error("Failed to fetch rules");
+            }
+            return res.json();
         }
-        return res.json();
-    });
+    );
     return response;
 };
 
@@ -52,8 +54,7 @@ export const deleteRule = async (ruleId) => {
         throw new Error("Failed to delete rule");
     }
     return await response.json();
-}
-
+};
 
 export const getRule = async (ruleId) => {
     const headers = await getAuthHeaders();
@@ -62,8 +63,7 @@ export const getRule = async (ruleId) => {
         throw new Error("Failed to fetch rule");
     }
     return await response.json();
-}
-
+};
 
 export const updateRule = async (ruleId, ruleData) => {
     const headers = await getAuthHeaders();
@@ -76,4 +76,34 @@ export const updateRule = async (ruleId, ruleData) => {
         throw new Error("Failed to update rule");
     }
     return await response.json();
-}
+};
+
+export const storeUserData = async () => {
+    const shopify = useAppBridge();
+
+    const sessionToken = await shopify.idToken();
+    const shop = shopify.config.shop;
+    const clientId = shopify.config.apiKey;
+    const clientSecret = import.meta.env.VITE_SHOPIFY_API_SECRET;
+    const appName = import.meta.env.VITE_SHOPIFY_APP_NAME;
+
+    if (sessionToken && shop && clientId && clientSecret) {
+        const result = await fetch("/api/store-user-data", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                shop,
+                clientId,
+                clientSecret,
+                sessionToken,
+                appName
+            }),
+        });
+
+        const data = await result.json();
+
+        return data;
+    }
+};

@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RulesController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\appUserController;
 
 Route::middleware(['verify.shopify'])->group(function () {
     Route::prefix('/rules')->group(function () {
@@ -13,4 +15,12 @@ Route::middleware(['verify.shopify'])->group(function () {
 
         Route::put('/update-rule/{id}', [RulesController::class, 'update_rule']);
     });
+
+    Route::post('/store-user-data', [appUserController::class, 'getUserData']);
+    Route::get('/get-user-analytics', [appUserController::class, 'getUserAnalytics']);
 });
+
+
+
+
+
