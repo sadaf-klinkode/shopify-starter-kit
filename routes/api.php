@@ -16,7 +16,7 @@ Route::middleware(['verify.shopify'])->group(function () {
         Route::put('/update-rule/{id}', [RulesController::class, 'update_rule']);
     });
 
-    Route::post('/store-user-data', [appUserController::class, 'getUserData']);
+    Route::post('/store-user-data', [appUserController::class, 'storeUserData']);
     Route::get('/get-user-analytics', [appUserController::class, 'getUserAnalytics']);
 
     Route::get('/get-plan-data', [PlanController::class, 'getPlanData']);

@@ -127,6 +127,8 @@ class RulesController extends Controller
     {
         $shop = Auth::user();
 
+        // dd($shop);
+
         $query = '
             query getDiscounts($first: Int, $after: String) {
                 discountNodes(first: $first, after: $after) {

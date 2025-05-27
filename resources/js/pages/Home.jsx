@@ -6,11 +6,14 @@ import { Page, Card, EmptyState } from "@shopify/polaris";
 import RulesTable from "../components/RulesTable";
 import { useNavigate } from "react-router-dom";
 import { storeUserData } from "../api";
+import { useContext } from "react";
+import { ShopContext } from "../contexts/ShopContext";
 
 const Home = () => {
     const navigate = useNavigate();
     const [rules, setRules] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { loadingContext } = useContext(ShopContext);
 
     const handleDelete = async (ruleId) => {
         if (window.confirm("Are you sure you want to delete this rule?")) {
@@ -55,9 +58,13 @@ const Home = () => {
             setLoading(false);
         };
 
-        fetchUserData();
+        // fetchUserData();
         fetchRules();
     }, []);
+
+    if (loadingContext) {
+        return <div>Loading...</div>;
+    }
 
     return (
         <Page

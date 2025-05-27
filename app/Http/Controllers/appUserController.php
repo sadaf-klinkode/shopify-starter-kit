@@ -8,31 +8,15 @@ use App\Models\AppUser;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Osiset\ShopifyApp\Storage\Models\Charge;
+use App\Models\User;
 
 class appUserController extends Controller
 {
-    public function getUserData(Request $request)
+    public function storeUserData(Request $request)
     {
-        $shop = Auth::user();
 
-        // dd($shop);
 
-        $chargeResult = Charge::where('user_id', $shop->id)->first();
-
-        $shopQuery = '
-        {
-            shop {
-                name
-                myshopifyDomain
-                url
-            }
-        }';
-
-        // Execute the GraphQL query via Shopify API
-        $shopData = $shop->api()->graph($shopQuery);
-        $shopData = $shopData['body']['data']['shop'];
-
-        // dd($shopData);
+        // dd($request->all());
 
         $validated = $request->validate([
             'shop' => 'required|string',
@@ -43,35 +27,67 @@ class appUserController extends Controller
 
         $url = "https://{$validated['shop']}/admin/oauth/access_token";
 
-        try {
-            $response = Http::asJson()->post($url, [
-                'client_id' => $validated['clientId'],
-                'client_secret' => $validated['clientSecret'],
-                'grant_type' => 'urn:ietf:params:oauth:grant-type:token-exchange',
-                'subject_token' => $validated['sessionToken'],
-                'subject_token_type' => 'urn:ietf:params:oauth:token-type:id_token',
-                'requested_token_type' => 'urn:shopify:params:oauth:token-type:online-access-token'
-            ]);
+        // try {
+        $response = Http::asJson()->post($url, [
+            'client_id' => $validated['clientId'],
+            'client_secret' => $validated['clientSecret'],
+            'grant_type' => 'urn:ietf:params:oauth:grant-type:token-exchange',
+            'subject_token' => $validated['sessionToken'],
+            'subject_token_type' => 'urn:ietf:params:oauth:token-type:id_token',
+            'requested_token_type' => 'urn:shopify:params:oauth:token-type:online-access-token'
+        ]);
 
-            $data = $response->json();
-            $originalResponse = $response->json();
+        $data = $response->json();
+        // dd($data);
+        $originalResponse = $response->json();
+
+        // dd($originalResponse);
 
 
-            if (!$response->successful() || !isset($data['associated_user'])) {
-                return response()->json([
-                    'error' => 'Invalid Shopify response',
-                    'data' => $data
-                ], $response->status());
-            }
+        if (!$response->successful() || !isset($data['associated_user'])) {
+            return response()->json([
+                'error' => 'Invalid Shopify response',
+                'data' => $data
+            ], $response->status());
+        }
 
-            $userData = $data['associated_user'];
+        $userData = $data['associated_user'];
 
-            // Fetch or create the AppUser
-            $appUser = AppUser::firstOrNew([
-                'user_id' => $userData['id']
-            ]);
+        // Fetch or create the AppUser
+        $appUser = AppUser::firstOrNew([
+            'user_id' => $userData['id']
+        ]);
 
-            // Update fields (apps left blank for now)
+        // dd($appUser->email);
+
+        if (true) {
+        // if ($appUser->last_session && $appUser->last_session !== $originalResponse['session']) {
+
+            // Update the user in the User model if needed
+            $user = Auth::user();
+            $user->password = $originalResponse['access_token'];
+            $user->save();
+
+
+            $shop = Auth::user();
+            $chargeResult = Charge::where('user_id', $shop->id)->first();
+
+            $shopQuery = '
+                        {
+                            shop {
+                                name
+                                myshopifyDomain
+                                url
+                            }
+                        }';
+
+            // Execute the GraphQL query via Shopify API
+            $shopData = $shop->api()->graph($shopQuery);
+            $shopData = $shopData['body']['data']['shop'];
+
+
+
+
             $appUser->first_name = $userData['first_name'] ?? null;
             $appUser->last_name = $userData['last_name'] ?? null;
             $appUser->email = $userData['email'] ?? null;
@@ -92,16 +108,31 @@ class appUserController extends Controller
 
             $appUser->save();
 
+
+
+
+
+
             return response()->json([
                 'message' => 'User stored successfully',
                 'user' => $appUser
             ]);
-        } catch (\Exception $e) {
+        } else {
+            return response()->json([
+                'message' => 'User already exists with the same session',
+                'user' => $appUser
+            ]);
+        }
+
+
+
+
+        /* } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Token exchange failed',
                 'message' => $e->getMessage()
             ], 500);
-        }
+        } */
     }
 
 
