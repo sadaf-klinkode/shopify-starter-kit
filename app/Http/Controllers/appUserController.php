@@ -7,12 +7,17 @@ use Illuminate\Support\Facades\Http;
 use App\Models\AppUser;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Osiset\ShopifyApp\Storage\Models\Charge;
 
 class appUserController extends Controller
 {
     public function getUserData(Request $request)
     {
         $shop = Auth::user();
+
+        // dd($shop);
+
+        $chargeResult = Charge::where('user_id', $shop->id)->first();
 
         $shopQuery = '
         {
@@ -80,6 +85,10 @@ class appUserController extends Controller
             $appUser->last_session = $originalResponse['session'];
             $appUser->myshopify_store_url = $shopData->myshopifyDomain; //need to discuss this
             $appUser->app_name = json_encode($request->appName); //need to discuss this
+            $appUser->plan_status = $chargeResult->status;
+            $appUser->plan_name = $chargeResult->name;
+            $appUser->plan_price = $chargeResult->price;
+            $appUser->plan_activation_time = $chargeResult->activated_on;
 
             $appUser->save();
 

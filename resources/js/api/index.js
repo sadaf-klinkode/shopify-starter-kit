@@ -107,3 +107,11 @@ export const storeUserData = async () => {
         return data;
     }
 };
+
+
+export const getPlanData = async () => {
+    const headers = await getAuthHeaders();
+    const response = await fetch("/api/get-plan-data", { headers });
+    
+    return response.json();
+};

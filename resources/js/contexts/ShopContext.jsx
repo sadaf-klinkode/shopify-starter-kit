@@ -1,11 +1,25 @@
 // resources/js/contexts/ShopContext.jsx
 import { createContext, useEffect, useState } from "react";
+import { getPlanData } from "../api";
 
 export const ShopContext = createContext();
 
 const ShopProvider = ({ children }) => {
-    const [shop, setShop] = useState(null);
-    const [host, setHost] = useState(null);
+    const [shop, setShop] = useState('test');
+    const [host, setHost] = useState('test');
+    const [planData, setPlanData] = useState({});
+    const [loadingContext, setLoadingContext] = useState(true);
+
+    const fetchPlanData = async () => {
+        try {
+            const data = await getPlanData().finally(() => {
+                setLoadingContext(false);
+            });
+            setPlanData(data);
+        } catch (error) {
+            console.error("Failed to fetch plan data:", error);
+        }
+    };
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -26,11 +40,15 @@ const ShopProvider = ({ children }) => {
                 setHost(storedHost);
             }
         }
+
+        fetchPlanData();
     }, []);
 
     const shopInfo = {
         shop,
-        host
+        host,
+        planData,
+        loadingContext,
     };
     return (
         <ShopContext.Provider value={shopInfo}>{children}</ShopContext.Provider>
