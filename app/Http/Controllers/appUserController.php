@@ -15,9 +15,6 @@ class appUserController extends Controller
     public function storeUserData(Request $request)
     {
 
-
-        // dd($request->all());
-
         $validated = $request->validate([
             'shop' => 'required|string',
             'clientId' => 'required|string',
@@ -27,7 +24,6 @@ class appUserController extends Controller
 
         $url = "https://{$validated['shop']}/admin/oauth/access_token";
 
-        // try {
         $response = Http::asJson()->post($url, [
             'client_id' => $validated['clientId'],
             'client_secret' => $validated['clientSecret'],
@@ -38,10 +34,8 @@ class appUserController extends Controller
         ]);
 
         $data = $response->json();
-        // dd($data);
+        
         $originalResponse = $response->json();
-
-        // dd($originalResponse);
 
 
         if (!$response->successful() || !isset($data['associated_user'])) {
@@ -58,15 +52,7 @@ class appUserController extends Controller
             'user_id' => $userData['id']
         ]);
 
-        // dd($appUser->email);
-
-        if (true) {
-        // if ($appUser->last_session && $appUser->last_session !== $originalResponse['session']) {
-
-            // Update the user in the User model if needed
-            $user = Auth::user();
-            $user->password = $originalResponse['access_token'];
-            $user->save();
+        if ($appUser->last_session && $appUser->last_session !== $originalResponse['session']) {
 
 
             $shop = Auth::user();
@@ -96,15 +82,15 @@ class appUserController extends Controller
             $appUser->collaborator = $userData['collaborator'] ?? false;
             $appUser->locale = $userData['locale'] ?? null;
             $appUser->last_login_time = Carbon::now();
-            $appUser->store_url = $shopData->url; //need to discuss this
-            $appUser->store_name = $shopData->name; //need to discuss this
+            $appUser->store_url = $shopData->url;
+            $appUser->store_name = $shopData->name;
             $appUser->last_session = $originalResponse['session'];
-            $appUser->myshopify_store_url = $shopData->myshopifyDomain; //need to discuss this
-            $appUser->app_name = json_encode($request->appName); //need to discuss this
-            $appUser->plan_status = $chargeResult->status;
-            $appUser->plan_name = $chargeResult->name;
-            $appUser->plan_price = $chargeResult->price;
-            $appUser->plan_activation_time = $chargeResult->activated_on;
+            $appUser->myshopify_store_url = $shopData->myshopifyDomain;
+            $appUser->app_name = json_encode($request->appName);
+            $appUser->plan_status = $chargeResult->status ?? null;
+            $appUser->plan_name = $chargeResult->name ?? null;
+            $appUser->plan_price = $chargeResult->price ?? null;
+            $appUser->plan_activation_time = $chargeResult->activated_on ?? null;
 
             $appUser->save();
 
@@ -125,14 +111,6 @@ class appUserController extends Controller
         }
 
 
-
-
-        /* } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Token exchange failed',
-                'message' => $e->getMessage()
-            ], 500);
-        } */
     }
 
 
